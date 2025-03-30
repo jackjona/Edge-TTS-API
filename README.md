@@ -10,7 +10,7 @@ A REST API for Microsoft Edge Text-to-Speech service, providing high-quality tex
 GET /
 ```
 
-Returns basic API information about the service.
+Returns basic API information including the API key for authentication.
 
 **Example Response:**
 ```json
@@ -22,8 +22,8 @@ Returns basic API information about the service.
     "voices": "/api/voices",
     "tts": "/api/tts"
   },
-  "authentication": "Include X-API-Key header or api_key query parameter with all requests",
-  "documentation": "See README.md for detailed API documentation"
+  "documentation": "Include X-API-Key header or api_key query parameter with all requests",
+  "api_key": "your_api_key_here"
 }
 ```
 
@@ -105,23 +105,6 @@ All API endpoints except for the root endpoint require authentication using an A
 1. In the request header: `X-API-Key: your_api_key_here`
 2. As a query parameter: `?api_key=your_api_key_here`
 
-### Setting a Permanent API Key
-
-By default, the API generates a random API key each time the application is started. To set a permanent API key, you need to set the `API_KEY` environment variable before starting the application.
-
-For example:
-```bash
-# Linux/Mac
-export API_KEY=your_secret_api_key
-python main.py
-
-# Windows
-set API_KEY=your_secret_api_key
-python main.py
-```
-
-When deploying the application, make sure to configure the `API_KEY` environment variable in your hosting environment.
-
 ## Usage Examples
 
 ### cURL
@@ -186,6 +169,4 @@ with open("speech.mp3", "wb") as f:
 - Text length is limited to 5000 characters per request.
 - Audio files are stored temporarily and may be deleted periodically, so download and save any files you need to keep.
 - When converting speech, use voice names exactly as returned by the `/api/voices` endpoint.
-- The API accepts both mp3 and wav format requests for compatibility, but due to limitations in the underlying edge-tts library, all audio is currently generated as MP3 regardless of the requested format.
-- Files with a .wav extension will still be MP3 files. If you need actual WAV files, you'll need to convert the MP3 files after downloading.
-- The content-type of all audio files will be 'audio/mpeg' regardless of the file extension.
+- Only mp3 and wav formats are currently supported.

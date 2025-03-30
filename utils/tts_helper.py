@@ -41,8 +41,7 @@ async def generate_speech(text, voice, output_path, format='mp3'):
         text (str): Text to convert to speech
         voice (str): Voice to use (e.g., 'en-US-ChristopherNeural')
         output_path (str): Path to save the audio file
-        format (str): Audio format (mp3 or wav) - Note: edge-tts currently only outputs mp3,
-                      regardless of the file extension
+        format (str): Audio format (mp3 or wav)
         
     Returns:
         str: Path to the generated audio file
@@ -51,7 +50,7 @@ async def generate_speech(text, voice, output_path, format='mp3'):
         # Create communicate object
         communicate = edge_tts.Communicate(text, voice)
         
-        # Save the audio file - edge-tts will save as MP3 regardless of extension
+        # Generate speech
         await communicate.save(output_path)
         
         # Return the path to the generated file

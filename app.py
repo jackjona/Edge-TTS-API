@@ -8,23 +8,12 @@ import tempfile
 import asyncio
 from utils.tts_helper import get_available_voices, generate_speech
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, 
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
 # Create Flask app
 app = Flask(__name__)
 
 # API Authentication
-# Get API key from environment with a secure fallback
-# The API key should be set as an environment variable for production use
+# Get API key from environment or generate a secure one
 API_KEY = os.environ.get("API_KEY", secrets.token_urlsafe(32))
-
-# Log a warning if using the auto-generated key
-if os.environ.get("API_KEY") is None:
-    logger.warning("Using auto-generated API key. Set API_KEY environment variable for a permanent key.")
-    logger.info(f"Auto-generated API key: {API_KEY}")
 
 def require_api_key(f):
     @wraps(f)
@@ -38,6 +27,11 @@ def require_api_key(f):
             
         return f(*args, **kwargs)
     return decorated_function
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, 
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Configure temp directory for audio files
 TEMP_DIR = tempfile.gettempdir()
@@ -55,8 +49,8 @@ def index():
             "voices": "/api/voices",
             "tts": "/api/tts"
         },
-        "authentication": "Include X-API-Key header or api_key query parameter with all requests",
-        "documentation": "See README.md for detailed API documentation"
+        "documentation": "Include X-API-Key header or api_key query parameter with all requests",
+        "api_key": API_KEY
     })
 
 # API endpoint for text-to-speech conversion
@@ -73,13 +67,6 @@ def tts_api():
         # Validate inputs
         if not text:
             return jsonify({"error": "Text is required"}), 400
-            
-        # Validate format - currently only mp3 is supported by edge-tts
-        if audio_format not in ['mp3', 'wav']:
-            return jsonify({"error": "Invalid format. Supported formats are mp3 and wav"}), 400
-        
-        # Note: edge-tts currently only outputs mp3 regardless of the requested format
-        # We still use the requested format for the file extension to maintain API compatibility
         
         # Generate unique filename
         filename = f"{uuid.uuid4()}.{audio_format}"
@@ -106,15 +93,13 @@ def tts_api():
 def get_audio(filename):
     try:
         file_path = os.path.join(AUDIO_FOLDER, filename)
+        # Determine content type based on file extension
+        content_type = 'audio/mpeg' if filename.endswith('.mp3') else 'audio/wav'
         
         # Check if file exists
         if not os.path.exists(file_path):
             return jsonify({"error": "Audio file not found"}), 404
-        
-        # Note: edge-tts currently only outputs MP3 regardless of the file extension,
-        # so we'll always serve with audio/mpeg content type
-        content_type = 'audio/mpeg'
-        
+            
         # Serve the file
         return send_file(file_path, mimetype=content_type, as_attachment=True)
     except Exception as e:
@@ -126,9 +111,7 @@ def get_audio(filename):
 @require_api_key
 def get_voices_api():
     try:
-        logger.info("Getting available voices...")
         voices = asyncio.run(get_available_voices())
-        logger.info("Successfully retrieved voices")
         return jsonify({"voices": voices})
     except Exception as e:
         logger.exception("Error getting voices: %s", str(e))
