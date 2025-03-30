@@ -103,6 +103,9 @@
       const loading = document.getElementById('loading');
       const apiCode = document.getElementById('apiCode');
       
+      // Make sure loading indicator is hidden initially
+      loading.classList.add('hidden');
+      
       // Load voice options from the API
       loadVoices();
       
@@ -180,6 +183,9 @@
         const apiKey = document.getElementById('apiKey').value;
         const voiceSelect = document.getElementById('voice');
         
+        // Make sure loading indicator is hidden during voice loading
+        loading.classList.add('hidden');
+        
         fetch('/api/voices', {
           headers: {
             'X-API-Key': apiKey
@@ -210,6 +216,7 @@
           })
           .catch(error => {
             console.error('Error loading voices:', error);
+            loading.classList.add('hidden');
           });
       }
       
