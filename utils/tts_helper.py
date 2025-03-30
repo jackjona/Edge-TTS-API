@@ -22,7 +22,7 @@ async def get_available_voices():
                 'name': voice["ShortName"],
                 'gender': voice["Gender"],
                 'locale': voice["Locale"],
-                'display_name': f"{voice['Locale']} - {voice['DisplayName']} ({voice['Gender']})"
+                'display_name': f"{voice['Locale']} - {voice['FriendlyName']} ({voice['Gender']})"
             }
             formatted_voices.append(voice_obj)
             
