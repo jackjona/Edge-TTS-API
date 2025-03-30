@@ -3,14 +3,13 @@ import logging
 import uuid
 import secrets
 from functools import wraps
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, flash
+from flask import Flask, request, jsonify, send_file, url_for
 import tempfile
 import asyncio
 from utils.tts_helper import get_available_voices, generate_speech
 
 # Create Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "edge-tts-secret-key")
 
 # API Authentication
 # Get API key from environment or generate a secure one
@@ -30,6 +29,8 @@ def require_api_key(f):
     return decorated_function
 
 # Configure logging
+logging.basicConfig(level=logging.INFO, 
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Configure temp directory for audio files
@@ -37,16 +38,20 @@ TEMP_DIR = tempfile.gettempdir()
 os.makedirs(os.path.join(TEMP_DIR, "edge_tts_audio"), exist_ok=True)
 AUDIO_FOLDER = os.path.join(TEMP_DIR, "edge_tts_audio")
 
-# Main route - renders the web interface
+# API root - display API information
 @app.route('/')
 def index():
-    try:
-        # Get available voices using the helper function
-        voices = asyncio.run(get_available_voices())
-        return render_template('index.html', voices=voices, api_key=API_KEY)
-    except Exception as e:
-        logger.exception("Error loading voices: %s", str(e))
-        return render_template('index.html', voices=[], error="Failed to load voices. Please try again later.", api_key=API_KEY)
+    return jsonify({
+        "name": "Edge TTS API",
+        "version": "1.0.0",
+        "description": "A REST API for Microsoft Edge TTS",
+        "endpoints": {
+            "voices": "/api/voices",
+            "tts": "/api/tts"
+        },
+        "documentation": "Include X-API-Key header or api_key query parameter with all requests",
+        "api_key": API_KEY
+    })
 
 # API endpoint for text-to-speech conversion
 @app.route('/api/tts', methods=['POST'])
@@ -71,46 +76,17 @@ def tts_api():
         asyncio.run(generate_speech(text, voice, output_path, audio_format))
         
         # Return a URL to access the audio file
-        file_url = url_for('get_audio', filename=filename)
-        return jsonify({"success": True, "file_url": file_url})
+        file_url = url_for('get_audio', filename=filename, _external=True)
+        return jsonify({
+            "success": True, 
+            "file_url": file_url,
+            "text": text,
+            "voice": voice,
+            "format": audio_format
+        })
     except Exception as e:
         logger.exception("Error in TTS API: %s", str(e))
         return jsonify({"error": str(e)}), 500
-
-# Web interface for text-to-speech conversion
-@app.route('/convert', methods=['POST'])
-def convert_text():
-    try:
-        # Get form data
-        text = request.form.get('text', '')
-        voice = request.form.get('voice', 'en-US-ChristopherNeural')
-        audio_format = request.form.get('format', 'mp3').lower()
-        
-        # Validate inputs
-        if not text:
-            flash("Please enter some text to convert.", "error")
-            return redirect(url_for('index'))
-        
-        # Generate unique filename
-        filename = f"{uuid.uuid4()}.{audio_format}"
-        output_path = os.path.join(AUDIO_FOLDER, filename)
-        
-        # Generate speech
-        asyncio.run(generate_speech(text, voice, output_path, audio_format))
-        
-        # Return the audio file URL
-        file_url = url_for('get_audio', filename=filename)
-        return render_template('index.html', 
-                             audio_url=file_url, 
-                             text=text, 
-                             selected_voice=voice, 
-                             voices=asyncio.run(get_available_voices()),
-                             selected_format=audio_format,
-                             api_key=API_KEY)
-    except Exception as e:
-        logger.exception("Error in convert text: %s", str(e))
-        flash(f"Error converting text: {str(e)}", "error")
-        return redirect(url_for('index'))
 
 # Route to serve generated audio files
 @app.route('/audio/<filename>')
@@ -140,15 +116,6 @@ def get_voices_api():
     except Exception as e:
         logger.exception("Error getting voices: %s", str(e))
         return jsonify({"error": str(e)}), 500
-
-# API Documentation page
-@app.route('/api/docs')
-def api_docs():
-    try:
-        return render_template('api_docs.html', api_key=API_KEY)
-    except Exception as e:
-        logger.exception("Error loading API docs: %s", str(e))
-        return render_template('index.html', error="Failed to load API documentation. Please try again later.")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
