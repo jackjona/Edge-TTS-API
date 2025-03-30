@@ -101,8 +101,7 @@ def index():
             "stream": "/api/stream"
         },
         "demo": "/demo/stream",
-        "documentation": "Include X-API-Key header or api_key query parameter with all requests",
-        "api_key": API_KEY
+        "documentation": "Include X-API-Key header or api_key query parameter with all requests. See the .env file for API key configuration."
     })
 
 # API endpoint for text-to-speech conversion
