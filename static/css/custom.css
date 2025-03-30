@@ -1,0 +1,82 @@
+/* Custom styles for Edge TTS Converter */
+
+/* Audio player styling */
+audio {
+    border-radius: 8px;
+    width: 100%;
+}
+
+/* Code and pre elements styling */
+pre {
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+code {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.9em;
+}
+
+/* Form focus styles */
+.form-control:focus, .form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Loading indicator styles */
+.spinner-border {
+    vertical-align: middle;
+}
+
+/* Improve textarea appearance */
+textarea.form-control {
+    min-height: 120px;
+    line-height: 1.5;
+}
+
+/* Improve mobile responsiveness */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    textarea.form-control {
+        min-height: 100px;
+    }
+}
+
+/* Make sure audio player controls are visible in dark mode */
+audio::-webkit-media-controls-panel {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Style the download button */
+.btn-success {
+    transition: all 0.2s ease;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+}
+
+/* Custom styles for select dropdowns */
+optgroup {
+    font-weight: 600;
+    color: var(--bs-info);
+}
+
+/* Improve card appearance */
+.card {
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+}
