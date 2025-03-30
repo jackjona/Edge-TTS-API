@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edge TTS API Documentation</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-4">
+        <header class="text-center mb-5">
+            <h1 class="display-4">
+                <i class="fas fa-code me-2"></i>Edge TTS API Documentation
+            </h1>
+            <p class="lead">Complete guide to using the Edge Text-to-Speech API</p>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-primary mt-2">
+                <i class="fas fa-arrow-left me-2"></i>Back to Converter
+            </a>
+        </header>
+
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- API Key Section -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-primary bg-opacity-25">
+                        <h2 class="h5 mb-0">Authentication</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-4">
+                            <h6 class="mb-2"><i class="fas fa-key me-2"></i>Your API Key:</h6>
+                            <div class="input-group">
+                                <input type="text" class="form-control font-monospace" id="apiKeyField" readonly value="{{ api_key }}">
+                                <button class="btn btn-outline-secondary" type="button" id="copyApiKeyBtn">
+                                    <i class="fas fa-copy me-1"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <p>All API requests require authentication. You can provide your API key in one of two ways:</p>
+                        
+                        <h6>1. Request Header (Recommended)</h6>
+                        <pre class="bg-dark p-2 rounded mb-3"><code>X-API-Key: {{ api_key }}</code></pre>
+                        
+                        <h6>2. Query Parameter</h6>
+                        <pre class="bg-dark p-2 rounded"><code>?api_key={{ api_key }}</code></pre>
+                    </div>
+                </div>
+                
+                <!-- Endpoints Documentation -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-primary bg-opacity-25">
+                        <h2 class="h5 mb-0">API Endpoints</h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- Text-to-Speech Endpoint -->
+                        <div class="mb-4">
+                            <h3 class="h5 border-bottom pb-2 mb-3">Convert Text to Speech</h3>
+                            
+                            <div class="mb-3">
+                                <h6>Endpoint:</h6>
+                                <div class="bg-dark p-2 rounded">
+                                    <code>POST {{ request.host_url }}api/tts</code>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6>Request Body (JSON):</h6>
+                                <pre class="bg-dark p-2 rounded"><code>{
+  "text": "Your text to convert to speech",
+  "voice": "en-US-ChristopherNeural",  // Optional, defaults to en-US-ChristopherNeural
+  "format": "mp3"                      // Optional, can be mp3 or wav, defaults to mp3
+}</code></pre>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6>Response:</h6>
+                                <pre class="bg-dark p-2 rounded"><code>// Success Response (200 OK)
+{
+  "success": true,
+  "file_url": "/audio/bc61e862-1a3a-4b8f-b189-cd7b487febc2.mp3"
+}
+
+// Error Response (400 Bad Request)
+{
+  "error": "Text is required"
+}
+
+// Error Response (401 Unauthorized)
+{
+  "error": "Unauthorized. Invalid or missing API key."
+}
+
+// Error Response (500 Internal Server Error)
+{
+  "error": "Error message describing the issue"
+}</code></pre>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6>Example cURL Request:</h6>
+                                <pre class="bg-dark p-2 rounded"><code>curl -X POST \
+  "{{ request.host_url }}api/tts" \
+  -H "X-API-Key: {{ api_key }}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hello, this is a test of the Edge TTS API.",
+    "voice": "en-US-ChristopherNeural",
+    "format": "mp3"
+  }'</code></pre>
+                            </div>
+                        </div>
+                        
+                        <!-- Available Voices Endpoint -->
+                        <div>
+                            <h3 class="h5 border-bottom pb-2 mb-3">Get Available Voices</h3>
+                            
+                            <div class="mb-3">
+                                <h6>Endpoint:</h6>
+                                <div class="bg-dark p-2 rounded">
+                                    <code>GET {{ request.host_url }}api/voices</code>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6>Response:</h6>
+                                <pre class="bg-dark p-2 rounded"><code>// Success Response (200 OK)
+{
+  "voices": [
+    {
+      "name": "af-ZA-AdriNeural",
+      "gender": "Female",
+      "locale": "af-ZA",
+      "display_name": "af-ZA - Microsoft Adri Online (Natural) - Afrikaans (South Africa) (Female)"
+    },
+    {
+      "name": "am-ET-MekdesNeural",
+      "gender": "Female",
+      "locale": "am-ET",
+      "display_name": "am-ET - Microsoft Mekdes Online (Natural) - Amharic (Ethiopia) (Female)"
+    },
+    // ... more voices
+  ]
+}
+
+// Error Response (401 Unauthorized)
+{
+  "error": "Unauthorized. Invalid or missing API key."
+}
+
+// Error Response (500 Internal Server Error)
+{
+  "error": "Error message describing the issue"
+}</code></pre>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6>Example cURL Request:</h6>
+                                <pre class="bg-dark p-2 rounded"><code>curl -X GET \
+  "{{ request.host_url }}api/voices" \
+  -H "X-API-Key: {{ api_key }}"</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rate Limits and Usage Notes -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-primary bg-opacity-25">
+                        <h2 class="h5 mb-0">Usage Notes</h2>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush bg-transparent">
+                            <li class="list-group-item bg-transparent">
+                                <strong>Text Length:</strong> Limited to 5000 characters per request.
+                            </li>
+                            <li class="list-group-item bg-transparent">
+                                <strong>Audio Files:</strong> Temporary audio files may be deleted periodically, so download and save any files you need to keep.
+                            </li>
+                            <li class="list-group-item bg-transparent">
+                                <strong>Voice Selection:</strong> Use the voice names exactly as returned by the <code>/api/voices</code> endpoint.
+                            </li>
+                            <li class="list-group-item bg-transparent">
+                                <strong>Supported Formats:</strong> Currently only mp3 and wav formats are supported.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark py-4 mt-5">
+        <div class="container text-center">
+            <p class="text-muted mb-0">Edge TTS API Documentation | Powered by Microsoft Edge TTS</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // API Key Copy Button Functionality
+            const copyApiKeyBtn = document.getElementById('copyApiKeyBtn');
+            if (copyApiKeyBtn) {
+                copyApiKeyBtn.addEventListener('click', function() {
+                    const apiKeyField = document.getElementById('apiKeyField');
+                    
+                    // Select the API key field
+                    apiKeyField.select();
+                    apiKeyField.setSelectionRange(0, 99999); // For mobile devices
+                    
+                    // Copy the text inside the text field
+                    navigator.clipboard.writeText(apiKeyField.value)
+                        .then(() => {
+                            // Show success message
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('Failed to copy API key: ', err);
+                            
+                            // Fallback for older browsers
+                            document.execCommand('copy');
+                            
+                            // Show success message
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                            }, 2000);
+                        });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

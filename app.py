@@ -1,6 +1,8 @@
 import os
 import logging
 import uuid
+import secrets
+from functools import wraps
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, flash
 import tempfile
 import asyncio
@@ -9,6 +11,23 @@ from utils.tts_helper import get_available_voices, generate_speech
 # Create Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "edge-tts-secret-key")
+
+# API Authentication
+# Get API key from environment or generate a secure one
+API_KEY = os.environ.get("API_KEY", secrets.token_urlsafe(32))
+
+def require_api_key(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Check if API key is provided in the request
+        api_key = request.headers.get('X-API-Key') or request.args.get('api_key')
+        
+        # If no API key is provided or the API key is invalid
+        if not api_key or api_key != API_KEY:
+            return jsonify({"error": "Unauthorized. Invalid or missing API key."}), 401
+            
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -24,13 +43,14 @@ def index():
     try:
         # Get available voices using the helper function
         voices = asyncio.run(get_available_voices())
-        return render_template('index.html', voices=voices)
+        return render_template('index.html', voices=voices, api_key=API_KEY)
     except Exception as e:
         logger.exception("Error loading voices: %s", str(e))
-        return render_template('index.html', voices=[], error="Failed to load voices. Please try again later.")
+        return render_template('index.html', voices=[], error="Failed to load voices. Please try again later.", api_key=API_KEY)
 
 # API endpoint for text-to-speech conversion
 @app.route('/api/tts', methods=['POST'])
+@require_api_key
 def tts_api():
     try:
         # Get data from request
@@ -85,7 +105,8 @@ def convert_text():
                              text=text, 
                              selected_voice=voice, 
                              voices=asyncio.run(get_available_voices()),
-                             selected_format=audio_format)
+                             selected_format=audio_format,
+                             api_key=API_KEY)
     except Exception as e:
         logger.exception("Error in convert text: %s", str(e))
         flash(f"Error converting text: {str(e)}", "error")
@@ -111,6 +132,7 @@ def get_audio(filename):
 
 # Route to get available voices (JSON API)
 @app.route('/api/voices', methods=['GET'])
+@require_api_key
 def get_voices_api():
     try:
         voices = asyncio.run(get_available_voices())
@@ -118,6 +140,15 @@ def get_voices_api():
     except Exception as e:
         logger.exception("Error getting voices: %s", str(e))
         return jsonify({"error": str(e)}), 500
+
+# API Documentation page
+@app.route('/api/docs')
+def api_docs():
+    try:
+        return render_template('api_docs.html', api_key=API_KEY)
+    except Exception as e:
+        logger.exception("Error loading API docs: %s", str(e))
+        return render_template('index.html', error="Failed to load API documentation. Please try again later.")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

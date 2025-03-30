@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const convertBtn = document.getElementById('convertBtn');
     const textArea = document.getElementById('text');
     const voiceSelect = document.getElementById('voice');
+    const copyApiKeyBtn = document.getElementById('copyApiKeyBtn');
     
     // Character counter for text area
     if (textArea) {
@@ -34,6 +35,41 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Form will submit normally
             return true;
+        });
+    }
+    
+    // API Key Copy Button Functionality
+    if (copyApiKeyBtn) {
+        copyApiKeyBtn.addEventListener('click', function() {
+            const apiKeyField = document.getElementById('apiKeyField');
+            
+            // Select the API key field
+            apiKeyField.select();
+            apiKeyField.setSelectionRange(0, 99999); // For mobile devices
+            
+            // Copy the text inside the text field
+            navigator.clipboard.writeText(apiKeyField.value)
+                .then(() => {
+                    // Show success message
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy API key: ', err);
+                    
+                    // Fallback for older browsers
+                    document.execCommand('copy');
+                    
+                    // Show success message
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                    }, 2000);
+                });
         });
     }
     
