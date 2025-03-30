@@ -14,9 +14,6 @@
     .form-control {
       margin-bottom: 1rem;
     }
-    .hidden {
-      display: none;
-    }
     #loading {
       display: flex;
       align-items: center;
@@ -68,7 +65,7 @@
           
           <div class="d-flex align-items-center">
             <button type="submit" class="btn btn-primary">Stream Audio</button>
-            <div id="loading" class="hidden">
+            <div id="loading" class="d-none">
               <div class="spinner-border spinner-border-sm text-light" role="status"></div>
               <span>Processing...</span>
             </div>
@@ -104,7 +101,7 @@
       const apiCode = document.getElementById('apiCode');
       
       // Make sure loading indicator is hidden initially
-      loading.classList.add('hidden');
+      loading.classList.add('d-none');
       
       // Load voice options from the API
       loadVoices();
@@ -118,7 +115,7 @@
         const format = document.getElementById('format').value;
         
         // Show loading spinner
-        loading.classList.remove('hidden');
+        loading.classList.remove('d-none');
         
         // Update API code example
         updateApiExample(apiKey, text, voice, format);
@@ -128,6 +125,10 @@
       });
       
       function streamAudio(apiKey, text, voice, format) {
+        // Hide any previous audio info and ensure loading is shown
+        audioInfo.innerHTML = '';
+        loading.classList.remove('d-none');
+        
         // Create request options
         const requestOptions = {
           method: 'POST',
@@ -149,33 +150,39 @@
               throw new Error(`HTTP error! Status: ${response.status}`);
             }
             
+            // Get the generation timestamp from headers
+            const timestamp = response.headers.get('X-Generation-Timestamp') || 'N/A';
+            
             // Convert the response to a blob
-            return response.blob();
+            return response.blob().then(blob => {
+              return { blob, timestamp };
+            });
           })
-          .then(blob => {
+          .then(data => {
             // Create object URL for the audio blob
-            const audioUrl = URL.createObjectURL(blob);
+            const audioUrl = URL.createObjectURL(data.blob);
             
             // Set the audio source and play
             audioPlayer.src = audioUrl;
             audioPlayer.play();
             
             // Update audio info
-            const fileSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+            const fileSizeMB = (data.blob.size / (1024 * 1024)).toFixed(2);
             audioInfo.innerHTML = `
               <strong>Audio generated successfully:</strong>
+              <div>Generation Time: ${data.timestamp}</div>
               <div>File Size: ${fileSizeMB} MB</div>
               <div>Format: ${format.toUpperCase()}</div>
               <div>Voice: ${voice}</div>
             `;
             
             // Hide loading spinner
-            loading.classList.add('hidden');
+            loading.classList.add('d-none');
           })
           .catch(error => {
             console.error('Error:', error);
             audioInfo.innerHTML = `<div class="text-danger">Error: ${error.message}</div>`;
-            loading.classList.add('hidden');
+            loading.classList.add('d-none');
           });
       }
       
@@ -184,7 +191,7 @@
         const voiceSelect = document.getElementById('voice');
         
         // Make sure loading indicator is hidden during voice loading
-        loading.classList.add('hidden');
+        loading.classList.add('d-none');
         
         fetch('/api/voices', {
           headers: {
@@ -216,7 +223,7 @@
           })
           .catch(error => {
             console.error('Error loading voices:', error);
-            loading.classList.add('hidden');
+            loading.classList.add('d-none');
           });
       }
       
@@ -235,14 +242,24 @@ fetch('/api/stream', {
     format: '${format}'
   })
 })
-  .then(response => response.blob())
-  .then(blob => {
+  .then(response => {
+    // Get timestamp from response headers
+    const timestamp = response.headers.get('X-Generation-Timestamp');
+    
+    return response.blob().then(blob => {
+      return { blob, timestamp };
+    });
+  })
+  .then(data => {
     // Create object URL for the audio blob
-    const audioUrl = URL.createObjectURL(blob);
+    const audioUrl = URL.createObjectURL(data.blob);
     
     // Set the audio source and play
     audioPlayer.src = audioUrl;
     audioPlayer.play();
+    
+    // Display generation timestamp
+    console.log('Generation time:', data.timestamp);
   });
         `;
         

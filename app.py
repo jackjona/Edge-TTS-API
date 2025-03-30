@@ -4,6 +4,7 @@ import uuid
 import secrets
 import time
 import threading
+from datetime import datetime
 from functools import wraps
 from flask import Flask, request, jsonify, send_file, url_for, send_from_directory
 import tempfile
@@ -246,7 +247,12 @@ def stream_tts_api():
         
         # Stream the audio data
         logger.info(f"Streaming TTS: text='{text[:50]}...' voice={voice} format={audio_format}")
-        return create_stream_response(text, voice, audio_format)
+        
+        # Add a generation timestamp to the response headers
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        response = create_stream_response(text, voice, audio_format)
+        response.headers['X-Generation-Timestamp'] = timestamp
+        return response
         
     except Exception as e:
         logger.exception("Error in streaming TTS API: %s", str(e))
